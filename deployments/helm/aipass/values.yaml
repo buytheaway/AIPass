@@ -1,0 +1,13 @@
+image:
+  repository: aipass
+  tag: local
+
+postgres:
+  dsn: postgres://aipass:aipass@postgres:5432/aipass?sslmode=disable
+
+redis:
+  addr: redis:6379
+
+kafka:
+  brokers: redpanda:9092
+

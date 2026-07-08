@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AIPass Scanner</title>
+    <link rel="stylesheet" href="/scanner/assets/styles.css" />
+  </head>
+  <body>
+    <main class="scanner-shell">
+      <section class="scanner-panel">
+        <div class="scanner-header">
+          <div>
+            <h1>AIPass Scanner</h1>
+            <p>Scan a member QR pass to check in or check out.</p>
+          </div>
+          <span id="cameraStatus" class="status">Camera idle</span>
+        </div>
+
+        <div class="camera-frame">
+          <video id="preview" autoplay muted playsinline></video>
+          <div class="scan-window" aria-hidden="true"></div>
+        </div>
+
+        <div class="actions">
+          <button id="startButton" type="button">Start camera</button>
+          <button id="stopButton" type="button" class="secondary">Stop</button>
+        </div>
+
+        <form id="manualForm" class="manual-form">
+          <label for="manualToken">Manual token fallback</label>
+          <div>
+            <input id="manualToken" name="manualToken" autocomplete="off" placeholder="Paste QR token" />
+            <button type="submit">Validate</button>
+          </div>
+        </form>
+
+        <section id="result" class="result neutral">
+          <strong>Waiting for scan</strong>
+          <span>Point the camera at an AIPass QR code.</span>
+        </section>
+      </section>
+    </main>
+
+    <script src="/scanner/assets/scanner.js"></script>
+  </body>
+</html>
+

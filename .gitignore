@@ -1,0 +1,8 @@
+.env
+*.log
+bin/
+dist/
+tmp/
+coverage.out
+deployments/docker/keys/private.pem
+deployments/docker/keys/public.pem

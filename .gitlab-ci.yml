@@ -1,0 +1,21 @@
+stages:
+  - test
+  - build
+
+test:
+  image: golang:1.22
+  stage: test
+  script:
+    - go mod download
+    - go test ./...
+
+build:
+  image: docker:27
+  stage: build
+  services:
+    - docker:27-dind
+  script:
+    - docker build -f Dockerfile.access-api -t aipass/access-api:$CI_COMMIT_SHORT_SHA .
+    - docker build -f Dockerfile.scanner-gateway -t aipass/scanner-gateway:$CI_COMMIT_SHORT_SHA .
+    - docker build -f Dockerfile.notification-report-service -t aipass/notification-report-service:$CI_COMMIT_SHORT_SHA .
+
