@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rsa"
+	"errors"
 	"os"
 	"time"
 
@@ -23,7 +24,14 @@ type TokenManager struct {
 	ttl        time.Duration
 }
 
-func NewTokenManager(privateKeyPath, publicKeyPath string, ttl time.Duration) (*TokenManager, error) {
+func NewTokenManager(privateKeyPEM, publicKeyPEM, privateKeyPath, publicKeyPath string, ttl time.Duration) (*TokenManager, error) {
+	if privateKeyPEM != "" || publicKeyPEM != "" {
+		if privateKeyPEM == "" || publicKeyPEM == "" {
+			return nil, errors.New("both JWT_PRIVATE_KEY_PEM and JWT_PUBLIC_KEY_PEM must be set")
+		}
+		return NewTokenManagerFromPEM([]byte(privateKeyPEM), []byte(publicKeyPEM), ttl)
+	}
+
 	privateBytes, err := os.ReadFile(privateKeyPath)
 	if err != nil {
 		return nil, err
@@ -32,6 +40,10 @@ func NewTokenManager(privateKeyPath, publicKeyPath string, ttl time.Duration) (*
 	if err != nil {
 		return nil, err
 	}
+	return NewTokenManagerFromPEM(privateBytes, publicBytes, ttl)
+}
+
+func NewTokenManagerFromPEM(privateBytes, publicBytes []byte, ttl time.Duration) (*TokenManager, error) {
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateBytes)
 	if err != nil {
 		return nil, err

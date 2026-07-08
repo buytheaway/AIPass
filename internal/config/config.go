@@ -28,6 +28,8 @@ type HTTPConfig struct {
 }
 
 type AuthConfig struct {
+	PrivateKeyPEM  string
+	PublicKeyPEM   string
 	PrivateKeyPath string
 	PublicKeyPath  string
 	AccessTokenTTL time.Duration
@@ -76,6 +78,8 @@ func Load(serviceName string) Config {
 		HTTP:        HTTPConfig{Addr: env("HTTP_ADDR", defaultAddr)},
 		DatabaseURL: env("DATABASE_URL", "postgres://aipass:aipass@localhost:5432/aipass?sslmode=disable"),
 		Auth: AuthConfig{
+			PrivateKeyPEM:  env("JWT_PRIVATE_KEY_PEM", ""),
+			PublicKeyPEM:   env("JWT_PUBLIC_KEY_PEM", ""),
 			PrivateKeyPath: env("JWT_PRIVATE_KEY_PATH", "deployments/docker/keys/private.pem"),
 			PublicKeyPath:  env("JWT_PUBLIC_KEY_PATH", "deployments/docker/keys/public.pem"),
 			AccessTokenTTL: time.Duration(envInt("JWT_ACCESS_TTL_MINUTES", 60)) * time.Minute,

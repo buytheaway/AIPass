@@ -20,6 +20,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// @title AIPass Access API
+// @version 0.1.0
+// @description AIPass V1 foundation API.
+// @BasePath /
 func main() {
 	cfg := config.Load("access-api")
 	log := logger.New(cfg.App.Env)
@@ -42,7 +46,7 @@ func main() {
 	services := service.NewContainer(cfg, repos, log)
 
 	e := echo.New()
-	accesshttp.Register(e, cfg, services, registry, log)
+	accesshttp.Register(e, cfg, services, registry, log, database)
 
 	go startHTTP(log, e, cfg.HTTP.Addr)
 

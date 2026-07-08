@@ -99,9 +99,8 @@ values (
     'admin@aipass.local',
     'Local Admin',
     'admin',
-    '$2a$10$7EqJtq98hPqEX7fNZaFWoOHi1PrmGbUQb4nFQWDX2XrtmFgR7VX3W',
+    '$2a$10$Qa29wh5.a6an4ithu/sxme/9IdIBld4fpbl5.tRIYmlp93IyDVX3i',
     true,
     now(),
     now()
 ) on conflict (email) do nothing;
-

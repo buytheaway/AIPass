@@ -22,9 +22,15 @@ type Container struct {
 }
 
 func NewContainer(cfg config.Config, repos *repository.Store, log *zap.Logger) *Container {
-	tokenManager, err := auth.NewTokenManager(cfg.Auth.PrivateKeyPath, cfg.Auth.PublicKeyPath, cfg.Auth.AccessTokenTTL)
+	tokenManager, err := auth.NewTokenManager(
+		cfg.Auth.PrivateKeyPEM,
+		cfg.Auth.PublicKeyPEM,
+		cfg.Auth.PrivateKeyPath,
+		cfg.Auth.PublicKeyPath,
+		cfg.Auth.AccessTokenTTL,
+	)
 	if err != nil {
-		log.Warn("jwt keys are not available; auth login will fail until keys are generated", zap.Error(err))
+		log.Warn("jwt keys are not configured; auth login will return auth_not_configured", zap.Error(err))
 	}
 
 	users := &UserService{repo: repos}

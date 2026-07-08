@@ -10,45 +10,42 @@ AIPass is a production-like training project for QR-based access control and sub
 
 ## Local Start
 
-Generate local JWT keys first. Run this before `docker compose up --build` so keys are copied into service images:
+JWT keys are optional in local V1. If PEM files are missing, `access-api` creates an in-memory RSA keypair so login can still return a JWT. To use stable local keys, run:
 
 ```powershell
 .\scripts\gen_rsa_keys.ps1
 ```
 
-Start the stack:
+Start the V1 stack:
 
 ```powershell
-docker compose up --build
+docker compose up --build -d postgres redis minio redpanda access-api
+```
+
+Apply migrations:
+
+```powershell
+.\scripts\migrate.ps1
 ```
 
 Useful URLs:
 
 - access API: `http://localhost:8080`
-- scanner UI: `http://localhost:8081/scanner`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000` with `admin/admin`
+- Swagger: `http://localhost:8080/swagger/index.html`
 - MinIO console: `http://localhost:9001` with `minioadmin/minioadmin`
-- Jaeger: `http://localhost:16686`
 
 Local seed admin:
 
 - email: `admin@aipass.local`
-- password: `password`
+- password: `admin123`
 
 This seed is for local training only.
 
 ## Main Request Flow
 
 1. Admin logs in through `POST /api/v1/auth/login`.
-2. Admin creates a member through `POST /api/v1/users`.
-3. Admin creates a plan through `POST /api/v1/plans`.
-4. Admin assigns a subscription through `POST /api/v1/users/:id/subscriptions`.
-5. Admin activates the subscription through `PATCH /api/v1/subscriptions/:id/status`.
-6. Admin generates QR token through `POST /api/v1/subscriptions/:id/qr-pass`.
-7. Scanner UI reads the QR token and calls `POST /api/v1/scans/validate`.
-8. Scanner gateway validates PostgreSQL state, creates an access event, and publishes `access.events.v1`.
-9. Notification service consumes the event and sends Telegram when env vars are configured.
+2. `access-api` reads the user and bcrypt hash from PostgreSQL.
+3. On success, `access-api` returns an RSA JWT access token.
 
 ## Example API Flow
 
@@ -57,7 +54,7 @@ Login:
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@aipass.local","password":"password"}'
+  -d '{"email":"admin@aipass.local","password":"admin123"}'
 ```
 
 Create plan:
@@ -85,6 +82,6 @@ curl -X POST http://localhost:8080/api/v1/plans \
 
 ## Current Scope
 
-This first implementation is a working baseline. It includes the service layout, schema, auth, users, plans, subscriptions, QR generation, scanner validation, Kafka publishing, Telegram consumer, Excel reports, metrics, Docker Compose, Helm/CI scaffolding, and a real browser scanner page.
+This first implementation is a working baseline. V1 focuses on PostgreSQL, migrations, seed admin, real auth login, health/readiness, and basic Swagger.
 
-MinIO binary upload endpoints and full Swagger generation are scaffolded but intentionally left for later versions so the project stays teachable step by step.
+Redis, Redpanda, and MinIO are present as optional local infrastructure, but they are not required for the login flow in V1.

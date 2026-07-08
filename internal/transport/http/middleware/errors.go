@@ -47,6 +47,10 @@ func HTTPErrorHandler(log *zap.Logger) echo.HTTPErrorHandler {
 			status = http.StatusConflict
 			message = "conflict"
 		}
+		if errors.Is(err, service.ErrAuthNotConfigured) {
+			status = http.StatusServiceUnavailable
+			message = "auth_not_configured"
+		}
 
 		if status >= 500 {
 			log.Error("request failed", zap.Error(err))

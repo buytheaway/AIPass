@@ -8,4 +8,5 @@ var (
 	ErrUnauthorized = errors.New("unauthorized")
 	ErrForbidden    = errors.New("forbidden")
 	ErrConflict     = errors.New("conflict")
+	ErrAuthNotConfigured = errors.New("auth not configured")
 )

@@ -1,8 +1,11 @@
 package accessapi
 
 import (
+	"context"
 	"net/http"
+	"time"
 
+	_ "github.com/aipass/aipass/docs/swagger"
 	"github.com/aipass/aipass/internal/auth"
 	"github.com/aipass/aipass/internal/config"
 	"github.com/aipass/aipass/internal/domain"
@@ -12,9 +15,11 @@ import (
 	appmw "github.com/aipass/aipass/internal/transport/http/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	emw "github.com/labstack/echo/v4/middleware"
 	"github.com/shopspring/decimal"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	"go.uber.org/zap"
 )
 
@@ -23,10 +28,11 @@ type handler struct {
 	services *service.Container
 	metrics  *metrics.Registry
 	validate *validator.Validate
+	db       *sqlx.DB
 }
 
-func Register(e *echo.Echo, cfg config.Config, services *service.Container, registry *metrics.Registry, log *zap.Logger) {
-	h := &handler{cfg: cfg, services: services, metrics: registry, validate: validator.New()}
+func Register(e *echo.Echo, cfg config.Config, services *service.Container, registry *metrics.Registry, log *zap.Logger, database *sqlx.DB) {
+	h := &handler{cfg: cfg, services: services, metrics: registry, validate: validator.New(), db: database}
 
 	e.HideBanner = true
 	e.HTTPErrorHandler = appmw.HTTPErrorHandler(log)
@@ -35,11 +41,9 @@ func Register(e *echo.Echo, cfg config.Config, services *service.Container, regi
 	e.Use(registry.Middleware())
 
 	e.GET("/health", h.health)
-	e.GET("/ready", h.health)
+	e.GET("/ready", h.ready)
 	e.GET("/metrics", registry.Handler())
-	e.GET("/swagger/*", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"message": "run swag init in later version"})
-	})
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	api := e.Group("/api/v1")
 	api.POST("/auth/login", h.login)
@@ -83,6 +87,33 @@ func (h *handler) health(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok", "service": h.cfg.App.Name})
 }
 
+func (h *handler) ready(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 2*time.Second)
+	defer cancel()
+	if err := h.db.PingContext(ctx); err != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{
+			"status":   "not_ready",
+			"service":  h.cfg.App.Name,
+			"postgres": "down",
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]string{
+		"status":   "ready",
+		"service":  h.cfg.App.Name,
+		"postgres": "up",
+	})
+}
+
+// login godoc
+// @Summary Login admin or member
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "Login credentials"
+// @Success 200 {object} dto.LoginResponse
+// @Failure 400 {object} middleware.ErrorResponse
+// @Failure 401 {object} middleware.ErrorResponse
+// @Router /api/v1/auth/login [post]
 func (h *handler) login(c echo.Context) error {
 	var req dto.LoginRequest
 	if err := bindValidate(c, h.validate, &req); err != nil {

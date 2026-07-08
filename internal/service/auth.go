@@ -15,7 +15,7 @@ type AuthService struct {
 
 func (s *AuthService) Login(ctx context.Context, email, password string) (string, domain.User, error) {
 	if s.tokens == nil {
-		return "", domain.User{}, ErrUnauthorized
+		return "", domain.User{}, ErrAuthNotConfigured
 	}
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
